@@ -1,35 +1,32 @@
 CXX = g++
-CXXFLAGS = -Werror -Wpedantic -Wall
-CXX_FLAG = -Iinclude
+CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude
 GTEST_LIBS = -lgtest -lgtest_main -lpthread
 
-PAPKA = src
-PROJ_FILES = $(wildcard $(PAPKA)/*.cpp)
-OBJ_FILES = $(PROJ_FILES:.cpp=.o)
+SRC_DIR = src
+SRC = $(wildcard $(SRC_DIR)/*.cpp)
+OBJ = $(SRC:.cpp=.o)
+EXEC = roguelike
 
-TEST_PAPKA = gtests
-TEST_FILES = $(wildcard $(TEST_PAPKA)/*.cpp)
-TEST_OBJ_FILES = $(TEST_FILES:.cpp=.o)
+TEST_DIR = tests
+TEST_SRC = $(wildcard $(TEST_DIR)/*.cpp)
+TEST_OBJ = $(filter-out $(SRC_DIR)/main.o, $(OBJ)) $(TEST_SRC:.cpp=.o)
+TEST_EXEC = roguelike_tests
 
-FUNCTION_PAPKA = function
-FUNCTION_FILES = $(wildcard $(FUNCTION_PAPKA)/*.cpp)
-FUNCTION_OBJ_FILES = $(FUNCTION_FILES:.cpp=.o)
+all: $(EXEC) tests
 
-EXECUTABLE_1 = main
-EXECUTABLE_2 = tests
-$(EXECUTABLE_1): $(OBJ_FILES) $(FUNCTION_OBJ_FILES)
-	$(CXX) $(CXXFLAGS) $(CXX_FLAG) $(OBJ_FILES) $(FUNCTION_OBJ_FILES) -o $(EXECUTABLE_1)
-$(EXECUTABLE_2): $(TEST_OBJ_FILES) $(FUNCTION_OBJ_FILES)
-	$(CXX) $(CXXFLAGS) $(CXX_FLAG) $(TEST_OBJ_FILES) $(GTEST_LIBS) $(FUNCTION_OBJ_FILES) -o $(EXECUTABLE_2)
-$(PAPKA)/%.o: $(PAPKA)/%.cpp
-	$(CXX) $(CXXFLAGS) $(CXX_FLAG) -c $< -o $@
-	
-$(TEST_PAPKA)/%.o: $(TEST_PAPKA)/%.cpp
-	$(CXX) $(CXXFLAGS) $(CXX_FLAG) -c $< -o $@	
+$(EXEC): $(OBJ)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
-$(FUNCTION_PAPKA)/%.o: $(FUNCTION_PAPKA)/%.cpp
-	$(CXX) $(CXXFLAGS) $(CXX_FLAG) -c $< -o $@
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+tests: $(TEST_EXEC)
+
+$(TEST_EXEC): $(TEST_OBJ)
+	$(CXX) $(CXXFLAGS) $^ $(GTEST_LIBS) -o $@
+	./$@
+
 clean:
-	rm -f $(TEST_PAPKA)/*.o $(PAPKA)/*.o $(FUNCTION_PAPKA)/*.o
-cleanall:
-	rm -f $(TEST_PAPKA)/*.o $(PAPKA)/*.o $(FUNCTION_PAPKA)/*.o $(EXECUTABLE_1) $(EXECUTABLE_2)
+	rm -f $(OBJ) $(EXEC) $(TEST_OBJ) $(TEST_EXEC)
+
+.PHONY: all tests clean
